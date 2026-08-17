@@ -11,7 +11,6 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --clean",
-    "prepare": "pnpm build",
     "check": "pnpm lint && pnpm test && pnpm typecheck && pnpm check:skill-assets",
     "lint": "oxlint src",
     "test": "tsx src/rules/no-conditional-empty-object-spread.test.ts && tsx src/rules/no-unsafe-dictionary-type.test.ts && tsx src/rules/no-known-value-widening.test.ts && tsx src/rules/no-object-parameters.test.ts && tsx src/rules/no-runtime-typeof.test.ts && tsx src/rules/no-unknown-returns.test.ts && tsx src/rules/no-unknown-type-aliases.test.ts && tsx src/rules/no-widen-then-assert.test.ts && tsx src/rules/no-reflect-get.test.ts && tsx src/rules/no-reflect-apply.test.ts && tsx src/rules/no-module-mocking.test.ts && tsx src/rules/require-safety-comment-for-type-assertion.test.ts",
@@ -20,13 +19,13 @@
     "check:skill-assets": "node scripts/sync-skill-assets.mjs --check"
   },
   "dependencies": {
-    "@oxlint/plugins": "1.78.0",
-    "tsup": "8.5.1"
+    "@oxlint/plugins": "1.78.0"
   },
   "devDependencies": {
     "@types/node": "26.2.0",
     "oxlint": "1.78.0",
     "tsx": "4.23.12",
+    "tsup": "8.5.1",
     "typescript": "7.0.2"
   },
   "packageManager": "pnpm@10.33.0",

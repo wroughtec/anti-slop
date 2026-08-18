@@ -80,7 +80,7 @@ The same `ignorePatterns`, `jsPlugins`, and rules work under `lint` in a Vite+ c
 - `no-reflect-get` — rejects `Reflect.get` in favor of typed property access or boundary parsing.
 - `no-runtime-typeof` — requires boundary parsing instead of ad hoc `typeof` narrowing.
 - `no-shape-in-symbol-names` — rejects `shape` in symbol names.
-- `no-unknown-parameters` — rejects `unknown` inputs except the explicit `cause` convention.
+- `no-unknown-parameters` — rejects `unknown` inputs except the explicit `cause` and `error` conventions.
 - `no-unknown-returns` — rejects function contracts that return `unknown` or `Promise<unknown>`.
 - `no-unknown-type-aliases` — rejects aliases that merely conceal `unknown`.
 - `no-unsafe-dictionary-type` — rejects dictionary value contracts based on `unknown`, `any`, `object`, `{}`, and semantic equivalents.
@@ -174,6 +174,20 @@ interface UserShape {
 ```ts
 function handle(input: unknown) {}
 ```
+
+`cause` and `error` parameters are allowed. Schema-free projects can also
+permit `unknown` on type predicate and assertion functions:
+
+```json
+{
+  "anti-slop/no-unknown-parameters": [
+    "error",
+    { "allowInTypeGuards": true }
+  ]
+}
+```
+
+The option defaults to `false`.
 
 ### `no-unknown-returns`
 

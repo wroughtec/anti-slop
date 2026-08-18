@@ -954,23 +954,44 @@ function parameterName2(parameter, sourceText) {
   }
   return parameter.type === "Identifier" ? parameter.name : sourceText.replace(/\s*:\s*unknown\s*$/u, "");
 }
+function isAllowedUnknownParameterName(name) {
+  return name === "cause" || name === "error";
+}
+function hasTypePredicateReturn(node) {
+  const annotation = node.returnType;
+  if (annotation === null || annotation === void 0) return false;
+  return annotation.typeAnnotation.type === "TSTypePredicate";
+}
 var noUnknownParametersRule = defineRule10({
   meta: {
     type: "problem",
     docs: {
-      description: "Disallow explicitly unknown function parameters except `cause`; decode unknown input at its I/O boundary instead."
+      description: "Disallow explicitly unknown function parameters except `cause` and `error`; decode unknown input at its I/O boundary instead."
     },
     messages: {
       unknownParameter: "Parameter `{{parameter}}` leaves input unparsed. Accept a named domain type; run the expected schema or parser at the I/O boundary before calling this function."
-    }
+    },
+    schema: [
+      {
+        type: "object",
+        properties: {
+          allowInTypeGuards: { type: "boolean" }
+        },
+        additionalProperties: false
+      }
+    ],
+    defaultOptions: [{ allowInTypeGuards: false }]
   },
   createOnce(context) {
     const checkParameters = (node) => {
+      const option = context.options?.[0];
+      const allowTypeGuardParameters = typeof option === "object" && option !== null && !Array.isArray(option) && option.allowInTypeGuards === true;
       for (const parameter of node.params) {
         const annotation = parameterAnnotation2(parameter);
         if (annotation?.typeAnnotation.type !== "TSUnknownKeyword") continue;
         const name = parameterName2(parameter, context.sourceCode.getText(parameter));
-        if (name === "cause") continue;
+        if (isAllowedUnknownParameterName(name)) continue;
+        if (allowTypeGuardParameters && hasTypePredicateReturn(node)) continue;
         context.report({
           node: annotation.typeAnnotation,
           messageId: "unknownParameter",

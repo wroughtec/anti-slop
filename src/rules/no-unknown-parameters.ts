@@ -39,26 +39,53 @@ function parameterName(parameter: Parameter, sourceText: string): string {
     : sourceText.replace(/\s*:\s*unknown\s*$/u, "");
 }
 
-/** Disallow unknown inputs except explicitly named error-cause enrichment. */
+function isAllowedUnknownParameterName(name: string): boolean {
+  return name === "cause" || name === "error";
+}
+
+function hasTypePredicateReturn(node: ParameterOwner): boolean {
+  const annotation = node.returnType;
+  if (annotation === null || annotation === undefined) return false;
+  return annotation.typeAnnotation.type === "TSTypePredicate";
+}
+
+/** Disallow unknown inputs except explicitly named error-cause enrichment, catch errors, and optional type guards. */
 export const noUnknownParametersRule = defineRule({
   meta: {
     type: "problem",
     docs: {
       description:
-        "Disallow explicitly unknown function parameters except `cause`; decode unknown input at its I/O boundary instead.",
+        "Disallow explicitly unknown function parameters except `cause` and `error`; decode unknown input at its I/O boundary instead.",
     },
     messages: {
       unknownParameter:
         "Parameter `{{parameter}}` leaves input unparsed. Accept a named domain type; run the expected schema or parser at the I/O boundary before calling this function.",
     },
+    schema: [
+      {
+        type: "object",
+        properties: {
+          allowInTypeGuards: { type: "boolean" },
+        },
+        additionalProperties: false,
+      },
+    ],
+    defaultOptions: [{ allowInTypeGuards: false }],
   },
   createOnce(context) {
     const checkParameters = (node: ParameterOwner) => {
+      const option = context.options?.[0];
+      const allowTypeGuardParameters =
+        typeof option === "object" &&
+        option !== null &&
+        !Array.isArray(option) &&
+        option.allowInTypeGuards === true;
       for (const parameter of node.params) {
         const annotation = parameterAnnotation(parameter);
         if (annotation?.typeAnnotation.type !== "TSUnknownKeyword") continue;
         const name = parameterName(parameter, context.sourceCode.getText(parameter));
-        if (name === "cause") continue;
+        if (isAllowedUnknownParameterName(name)) continue;
+        if (allowTypeGuardParameters && hasTypePredicateReturn(node)) continue;
         context.report({
           node: annotation.typeAnnotation,
           messageId: "unknownParameter",
